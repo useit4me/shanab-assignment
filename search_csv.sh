@@ -25,18 +25,19 @@ done
 
 echo "\t"
 
+
 ##### Run a search on one (1) server access log of the user’s choosing based on one (1) field criteria input,
 ##### also of the user’s choosing, e.g. PROTOCOL=`TCP`
 ###### Get the csv filenames from the user input
 ###### store the user in put to the selection variable "sel" 
 
 while true; do
-echo "Enter the number of the file in the menu above you wish to search, i.e. [ 1,2,3,4 or 5] "
-read -p " " sel 
-if [[ $sel -ge 1 ]] && [[ $sel -le $count ]]; then
-            break;
-        else
-            echo "Ivalid Input. Please try again."
+    echo "Enter the number of the file in the menu above you wish to search, i.e. [ 1,2,3,4 or 5] "
+    read -p " " sel 
+        if [[ $sel -ge 1 ]] && [[ $sel -le $count ]]; then
+                    break;
+                else
+                    echo "Ivalid Input. Please try again."
         fi
 done
 
@@ -48,11 +49,11 @@ echo "\nYou have entered $sel and the file you have chosen is $file\n"
 ##### Get the user input and store to the criteria variable
 
 while true; do
-echo "1.PROTOCOL  2.SRC-IP  3.SRC-PORT  4.DEST-IP  5.DEST-PORT  6.PACKETS  7.BYTES"
-echo "\n"
-echo "Please enter the criteria to search:"
-read -p " " criteria 
-if [[ $criteria -ge 1 ]] && [[ $criteria -le 7 ]]; then
+    echo "1.PROTOCOL  2.SRC-IP  3.SRC-PORT  4.DEST-IP  5.DEST-PORT  6.PACKETS  7.BYTES"
+    echo "\n"
+    echo "Please enter the criteria to search:"
+    read -p " " criteria 
+        if [[ $criteria -ge 1 ]] && [[ $criteria -le 7 ]]; then
             break;
         else
             echo "Ivalid Input. Please try again."
@@ -66,30 +67,56 @@ queryString=${critArray[criteria]}
 ##### The results of each search the user conducts are to be displayed to the terminal and also exported to
 ##### a .csv file with a name of the user’s choosing. Each results file created must be uniquely named so
 ##### that the results files of previous searches are not overwritten
-
 while true; do
-echo "Enter the name of the 'csv' file to export the results to:"
-read -p " " csvfilename
+    echo "Enter the name of the 'csv' file to export the results to:"
+    read -p " " csvfilename
 
 ##### Each results file created must be uniquely named so
 ##### that the results files of previous searches are not overwritten
+    dot="$(cd "$(dirname "$0")"; pwd)"
+    path="$dot/$csvfilename"
 
-dot="$(cd "$(dirname "$0")"; pwd)"
-path="$dot/$csvfilename"
-
-if [ -f "$path" ]; then
-    echo "$csvfilename exists. please try again"
-else 
-     break;
-fi
+    if [ -f "$path" ]; then
+        echo "$csvfilename exists. please try again"
+    else 
+         break;
+    fi
 done
 
 #### Any log file records in which the CLASS field is set to normal are to be automatically excluded from
 #### the search results printed to the screen/written to file
 #### we grep for suspicious and move that to a temp file
 
-awk 'NR==1' < serv_acc_log_03042020.csv > tempfile.csv #Fro printing the index row
-grep "suspicious" serv_acc_log_03042020.csv >> tempfile.csv
+awk 'NR==1' < $file > tempfile.csv #For printing the index row
+#grep "suspicious" $file >> tempfile.csv # For getting only suspicious records.
+
+if [[ "$criteria" -eq 1 ]]; then
+
+    while true; do
+        echo "Enter the protocol to search [TCP, UDP, ICMP, GRE] "
+        read -p " " protocol
+
+        protocol=$(echo $protocol | tr 'a-z' 'A-Z')
+
+        if [[ "$protocol" == TCP ]] || [[ "$protocol" == UDP ]] || [[ "$protocol" == ICMP ]] || [[ "$protocol" == GRE ]]; then
+
+            awk '/suspicious/ && /'"$protocol"'/' < $file >> tempfile.csv
+
+            awk 'BEGIN {FS=","; proto=0}
+                NR>=1 {
+                            proto=proto+$3
+                            printf "%-10s %-15s %-10s %-15s %-10s %-10s \n", $3, $4, $5, $6, $7, $8
+                      }
+                END {print "Protocols matching '"$protocol"' is: ", NR}
+                ' < tempfile.csv > $csvfilename
+
+                cat $csvfilename
+        break;
+        else
+            echo "$protocol is invalid, try again"
+        fi
+    done
+fi
 
 ##### When the PACKETS and/or BYTES fields are selected by the user as search criteria, the user should
 ##### be able to choose greater than (-gt), less than (-lt), equal to (-eq) or not equal to !(-eq) the specific
@@ -97,28 +124,27 @@ grep "suspicious" serv_acc_log_03042020.csv >> tempfile.csv
 
 #### For searching the PACKETS from user input
 if [[ "$criteria" -eq 6 ]]; then
-echo "Enter your search term: "
-read -p " " pktsrch
+    echo "Enter your search term: "
+    read -p " " pktsrch
+    echo "1. greater than (-gt)"
+    echo "2. less than (-lt)"
+    echo "3. equal to (-eq)"
+    echo "4. not equal to !(-eq)\n"
+    echo "Choose [1,2,3 or 4] :"
+    read -p " " logicopr
 
-echo "1. greater than (-gt)"
-echo "2. less than (-lt)"
-echo "3. equal to (-eq)"
-echo "4. not equal to !(-eq)\n"
-echo "Choose [1,2,3 or 4] :"
-read -p " " logicopr
-
-if [[ "$logicopr" -eq 1 ]]; then
-    pktoper=">"
-fi
-if [[ "$logicopr" -eq 2 ]]; then
-    pktoper="<"
-fi
-if [[ "$logicopr" -eq 3 ]]; then
-    pktoper="="
-fi
-if [[ "$logicopr" -eq 4 ]]; then
-    pktoper="!="
-fi
+    if [[ "$logicopr" -eq 1 ]]; then
+        pktoper=">"
+    fi
+    if [[ "$logicopr" -eq 2 ]]; then
+        pktoper="<"
+    fi
+    if [[ "$logicopr" -eq 3 ]]; then
+        pktoper="=" 
+    fi
+    if [[ "$logicopr" -eq 4 ]]; then
+        pktoper="!="
+    fi
 
 #### how this query works, we are initially setting 
 #### awk 'BEGIN {FS=","; ttlpackets=0}  --> here FS( field separator is)  ,(comma) 
@@ -140,47 +166,47 @@ fi
 ####  ' < tempfile.csv >tmpresults.csv 
 ##### above line means we are < reading from tempfile.csv and writing > to tmpresults.csv
 
-awk 'BEGIN {FS=","; ttlpackets=0}
-    NR>=1 {
-            if ( $8 '$pktoper' '"$pktsrch"')
-                {
-                    ttlpackets=ttlpackets+$8
-                    printf "%-10s %-15s %-10s %-15s %-10s %-10s \n", $3, $4, $5, $6, $7, $8
-                }
-    }
-    END { print "Total packets for all matching rows is ", ttlpackets }
-    ' < tempfile.csv >tmpresults.csv
+    awk 'BEGIN {FS=","; ttlpackets=0}
+        NR>=1 {
+                if ( $8 '$pktoper' '"$pktsrch"')
+                    {
+                        ttlpackets=ttlpackets+$8
+                        printf "%-10s %-15s %-10s %-15s %-10s %-10s \n", $3, $4, $5, $6, $7, $8
+                    }
+            }
+        END { print "Total packets for all matching rows is ", ttlpackets }
+       ' < tempfile.csv >tmpresults.csv
 fi
 
 #### For searching the BYTES Same logic as above PACKETS just the columns and variables change.
 #### Taking the user input sepratley on this one.
 if [[ "$criteria" -eq 7 ]]; then
-echo "Enter your search term: "
-read -p " " bytsrch
+    echo "Enter your search term: "
+    read -p " " bytsrch
+    echo "1. greater than (-gt)"
+    echo "2. less than (-lt)"
+    echo "3. equal to (-eq)"
+    echo "4. not equal to !(-eq)\n"
+    echo "Choose [1,2,3 or 4] :"
+    read -p " " logicopr
 
-echo "1. greater than (-gt)"
-echo "2. less than (-lt)"
-echo "3. equal to (-eq)"
-echo "4. not equal to !(-eq)\n"
-echo "Choose [1,2,3 or 4] :"
-read -p " " logicopr
-
-if [[ "$logicopr" -eq 1 ]]; then
-    bytopr=">"
-fi
-if [[ "$logicopr" -eq 2 ]]; then
-    bytopr="<"
-fi
-if [[ "$logicopr" -eq 3 ]]; then
-    bytopr="="
-fi
-if [[ "$logicopr" -eq 4 ]]; then
-    bytopr="!="
-fi
+    if [[ "$logicopr" -eq 1 ]]; then
+        bytopr=">"
+    fi
+    if [[ "$logicopr" -eq 2 ]]; then
+        bytopr="<"
+    fi
+    if [[ "$logicopr" -eq 3 ]]; then
+        bytopr="="
+    fi
+    if [[ "$logicopr" -eq 4 ]]; then
+        bytopr="!="
+    fi
 
 ##### When the PACKETS and/or BYTES fields are selected by the user as search criteria, the user should
 ##### be able to choose greater than (-gt), less than (-lt), equal to (-eq) or not equal to !(-eq) the specific
 ##### value they provide, e.g. find all matches where PACKETS > `10`
+
 #### how this query works, here FS( field separator is)  ,(comma) we are initially setting 
 #### the ttl packets to 0 so that if the search returns nothing we can show it as zero.
 #### if not we are adding our query results to the ttl packets count. --ttlbytes=ttlbytes+$8 
@@ -191,18 +217,16 @@ fi
 #### and --printf "%-10s %-15s %-10s %-15s %-10s %-10s \n"-- is the spacing 10s means 10 spaces 
 #### this is tuned to show a user readable table with results.
 
-awk 'BEGIN {FS=","; ttlbytes=0}
-    NR>=1 {
-           if ( $9 '$bytopr' '"$bytsrch"')
-                {
-                    ttlbytes=ttlbytes+$9
-                    printf "%-10s %-15s %-10s %-15s %-10s %-10s \n", $3, $4, $5, $6, $7, $9
-                }
-    }
-    END { print "Total packets for all matching rows is ", ttlbytes }
-    ' < tempfile.csv >tmpresults.csv
-
+    awk 'BEGIN {FS=","; ttlbytes=0}
+        NR>=1 {
+               if ( $9 '$bytopr' '"$bytsrch"')
+                    {
+                        ttlbytes=ttlbytes+$9
+                        printf "%-10s %-15s %-10s %-15s %-10s %-10s \n", $3, $4, $5, $6, $7, $9
+                    }
+        }
+        END { print "Total packets for all matching rows is ", ttlbytes }
+        ' < tempfile.csv >tmpresults.csv
+    cat tmpresults.csv
 fi
-
-cat tmpresults.csv
 exit 0
