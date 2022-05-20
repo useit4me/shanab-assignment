@@ -122,14 +122,29 @@ if [[ "$logicopr" -eq 4 ]]; then
     pktoper="!="
 fi
 
-#### how this query works, here FS( field separator is)  ,(comma) we are initially setting 
+#### how this query works, we are initially setting 
+#### awk 'BEGIN {FS=","; ttlpackets=0}  --> here FS( field separator is)  ,(comma) 
 #### the ttl packets to 0 so that if the search returns nothing we can show it as zero.
+#### NR>=1 {  --> NR denotes the record or the file we are running this code on, and >=1 
+#### means include all lines greater than one.  
+####           if ( $8 '$pktoper' '"$pktsrch"') --> we are just doing a query on the $8 packets column
+#### to match our search criteria. 
+####               {
+####                  ttlpackets=ttlpackets+$8 --> getting a count of ttl packets coulumns
 #### if not we are adding our query results to the ttl packets count. --ttlpackets=ttlpackets+$8 
 #### $8 is where the PACKETS column is. 
+####                   printf "%-10s %-15s %-10s %-15s %-10s %-10s \n", $3, $4, $5, $6, $7, $8
 #### the query -- printf "%-10s %-15s %-10s %-15s %-10s %-10s \n", $3, $4, $5, $6, $7, $8 -- means 
 #### to show the columns $3--> PROTOCOL $4 -->SRC IP $5-->SRC PORT $6--> DEST IP $7-->DEST PORT $8--> PACKETS
 #### and --printf "%-10s %-15s %-10s %-15s %-10s %-10s \n"-- is the spacing 10s means 10 spaces 
 #### this is tuned to show a user readable table with results.
+####  END { print "Total packets for all matching rows is ", ttlpackets } --> just printing result
+####  ' < tempfile.csv >tmpresults.csv 
+##### above line means we are < reading from tempfile.csv and writing > to tmpresults.csv
+
+
+
+
 
 
 awk 'BEGIN {FS=","; ttlpackets=0}
