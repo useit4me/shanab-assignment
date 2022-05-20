@@ -188,6 +188,44 @@ search_again() {
 esac
 }
 
+search_IP() {
+        echo "Enter the ${critArray[criteria]} search query "
+        read -p " " srcdstinput
+        srcdstinput=$(echo $srcdstinput | tr 'a-z' 'A-Z')
+        awk 'BEGIN {FS=","; count=0}
+            NR>=1 {    
+                if ($'"$1"' ~ /'"$srcdstinput"'/) {
+                count++
+                printf "%-10s %-15s %-10s %-15s %-10s %-10s %-10s \n", $3, $4, $5, $6, $7, $8, $9
+                }
+            }
+        END {print "Total rows with matching search value/range are ",  count}
+        ' < tempfile.csv > $csvfilename
+        cat $csvfilename
+}
+
+search_port() {
+    while true; do
+        echo "Enter the ${critArray[criteria]} search query "
+        read -p " " portinput
+        if ! [[ "$portinput" =~ ^[0-9]+$ ]] ; then
+            echo "Enter a valid port number to search [0 - 65535]"
+        else
+        awk 'BEGIN {FS=","; count=0}
+            NR>=1 {    
+                if ($'"$1"' ~ /'"$srcdstinput"'/) {
+                count++
+                printf "%-10s %-15s %-10s %-15s %-10s %-10s %-10s \n", $3, $4, $5, $6, $7, $8, $9
+                }
+            }
+        END {print "Total rows with matching search value/range are ",  count}
+        ' < tempfile.csv > $csvfilename
+        cat $csvfilename
+        break;
+        fi
+    done
+}
+
 #### FUNCTION OBJECTIVE
 #### The user input code is made as a function for the script to continue to run 
 #### until the user specifically chooses to terminate it via a menu option.
@@ -252,24 +290,28 @@ main_menu() {
     fi
 
     # If user chose to search for SRC-IP
+    # $4
     if [[ "$criteria" -eq 2 ]]; then
-        echo "nothing defined for SRC-IP"
+        search_IP "4"
         search_again
     fi
 
     # If user chose to search for SRC-PORT
+    #$5
     if [[ "$criteria" -eq 3 ]]; then
-         echo "nothing defined for SRC-PORT"
+         search_port "5"
          search_again
     fi
     # If user chose to search for DST-IP
+    #$6
     if [[ "$criteria" -eq 4 ]]; then
-         echo "nothing defined for SRC-IP"
+         search_IP "6"
          search_again
     fi
     # If user chose to search for DST-PORT
+    #$7
     if [[ "$criteria" -eq 5 ]]; then
-         echo "nothing defined for DST-PORT"
+         search_port "7"
          search_again
     fi
 
