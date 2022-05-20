@@ -102,10 +102,9 @@ if [[ "$criteria" -eq 1 ]]; then
 
             awk '/suspicious/ && /'"$protocol"'/' < $file >> tempfile.csv
 
-            awk 'BEGIN {FS=","; proto=0}
+            awk 'BEGIN {FS=","}
                 NR>=1 {
-                            proto=proto+$3
-                            printf "%-10s %-15s %-10s %-15s %-10s %-10s \n", $3, $4, $5, $6, $7, $8
+                            printf "%-10s %-15s %-10s %-15s %-10s %-10s %-10s \n", $3, $4, $5, $6, $7, $8, $9
                       }
                 END {print "Protocols matching '"$protocol"' is: ", NR}
                 ' < tempfile.csv > $csvfilename
