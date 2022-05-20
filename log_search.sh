@@ -315,19 +315,19 @@ main_menu() {
          search_again
     fi
 
-# If user chose to search for PACKETS
-if [[ "$criteria" -eq 6 ]]; then
-    select_operator
-    search_packets $srchval $seloperator
-    search_again
-fi
+    # If user chose to search for PACKETS
+    if [[ "$criteria" -eq 6 ]]; then
+        select_operator
+        search_packets $srchval $seloperator
+        search_again
+    fi
 
-# If user chose to search for BYTES
-if [[ "$criteria" -eq 7 ]]; then
-    select_operator
-    search_bytes $srchval $seloperator
-    search_again
-fi
+    # If user chose to search for BYTES
+    if [[ "$criteria" -eq 7 ]]; then
+        select_operator
+        search_bytes $srchval $seloperator
+        search_again
+    fi
 }
 
 ###############################################################
