@@ -25,7 +25,6 @@ done
 
 echo "\t"
 
-
 ##### Run a search on one (1) server access log of the user’s choosing based on one (1) field criteria input,
 ##### also of the user’s choosing, e.g. PROTOCOL=`TCP`
 ###### Get the csv filenames from the user input
@@ -67,13 +66,14 @@ queryString=${critArray[criteria]}
 ##### The results of each search the user conducts are to be displayed to the terminal and also exported to
 ##### a .csv file with a name of the user’s choosing. Each results file created must be uniquely named so
 ##### that the results files of previous searches are not overwritten
+
 while true; do
 echo "Enter the name of the 'csv' file to export the results to:"
 read -p " " csvfilename
 
-
 ##### Each results file created must be uniquely named so
 ##### that the results files of previous searches are not overwritten
+
 dot="$(cd "$(dirname "$0")"; pwd)"
 path="$dot/$csvfilename"
 
@@ -84,14 +84,12 @@ else
 fi
 done
 
-
 #### Any log file records in which the CLASS field is set to normal are to be automatically excluded from
 #### the search results printed to the screen/written to file
 #### we grep for suspicious and move that to a temp file
 
 awk 'NR==1' < serv_acc_log_03042020.csv > tempfile.csv #Fro printing the index row
 grep "suspicious" serv_acc_log_03042020.csv >> tempfile.csv
-
 
 ##### When the PACKETS and/or BYTES fields are selected by the user as search criteria, the user should
 ##### be able to choose greater than (-gt), less than (-lt), equal to (-eq) or not equal to !(-eq) the specific
@@ -142,11 +140,6 @@ fi
 ####  ' < tempfile.csv >tmpresults.csv 
 ##### above line means we are < reading from tempfile.csv and writing > to tmpresults.csv
 
-
-
-
-
-
 awk 'BEGIN {FS=","; ttlpackets=0}
     NR>=1 {
             if ( $8 '$pktoper' '"$pktsrch"')
@@ -158,7 +151,6 @@ awk 'BEGIN {FS=","; ttlpackets=0}
     END { print "Total packets for all matching rows is ", ttlpackets }
     ' < tempfile.csv >tmpresults.csv
 fi
-
 
 #### For searching the BYTES Same logic as above PACKETS just the columns and variables change.
 #### Taking the user input sepratley on this one.
@@ -189,7 +181,6 @@ fi
 ##### When the PACKETS and/or BYTES fields are selected by the user as search criteria, the user should
 ##### be able to choose greater than (-gt), less than (-lt), equal to (-eq) or not equal to !(-eq) the specific
 ##### value they provide, e.g. find all matches where PACKETS > `10`
-
 #### how this query works, here FS( field separator is)  ,(comma) we are initially setting 
 #### the ttl packets to 0 so that if the search returns nothing we can show it as zero.
 #### if not we are adding our query results to the ttl packets count. --ttlbytes=ttlbytes+$8 
