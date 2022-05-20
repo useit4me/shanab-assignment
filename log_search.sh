@@ -1,16 +1,5 @@
 #!/bin/bash
 
-declare -a logs
-patt="serv_acc_log.+csv$"
-mennum=1
-### search for log files and get the csv files count and name for user to select input file.
-for file in ./*; do
-    if [[ $file =~ $patt ]]; then 
-        logs+=($(basename $file))
-    fi
-done
-count=${#logs[*]}
-
 ### We are using an array to show the user their selection, the dummy is to offset the 
 ### first array element [0] so that we can match the user input without further logic
 ### the selection criteria array also helps us to easiliy get the keywords for grep, awk and sed in the csv file.
@@ -22,14 +11,14 @@ critArray=(DUMMY PROTOCOL SRC-IP SRC-PORT DEST-IP DEST-PORT PACKETS BYTES)
 ###############----------FUNCTIONS----------#################
 #############################################################
 
-
+##### FUNCTION OBJECTIVE
+##### Run a search on one (1) server access log of the user’s choosing based on one (1) field criteria input,
+##### also of the user’s choosing, e.g. PROTOCOL=`TCP`
+###### Get the csv filenames from the user input
+###### store the user in put to the selection variable "sel" 
 
 select_search_log () {
-    ##### OBJECTIVE
-    ##### Run a search on one (1) server access log of the user’s choosing based on one (1) field criteria input,
-    ##### also of the user’s choosing, e.g. PROTOCOL=`TCP`
-    ###### Get the csv filenames from the user input
-    ###### store the user in put to the selection variable "sel" 
+ 
 
     if [[ $sel -ge 1 ]] && [[ $sel -le $count ]]; then
         file=${logs[$(expr $sel - 1)]}
@@ -62,11 +51,11 @@ select_search_log () {
     fi
 }
 
+#### FUNCTION OBJECTIVE
+##### The results of each search the user conducts are to be displayed to the terminal and also exported to
+##### a .csv file with a name of the user’s choosing. Each results file created must be uniquely named so
+##### that the results files of previous searches are not overwritten
 get_csv_filename() {
-    ##### OBJECTIVE
-    ##### The results of each search the user conducts are to be displayed to the terminal and also exported to
-    ##### a .csv file with a name of the user’s choosing. Each results file created must be uniquely named so
-    ##### that the results files of previous searches are not overwritten
     while true; do
         echo "Enter the name of the 'csv' file to export the results to [Eg:- results.csv]"
         read -p " " csvfilename
@@ -86,6 +75,10 @@ get_csv_filename() {
     done
 }
 
+#### FUNCTION OBJECTIVE
+#### 4. When the PACKETS and/or BYTES fields are selected by the user as search criteria, the user should
+####    be able to choose greater than (-gt), less than (-lt), equal to (-eq) or not equal to !(-eq) the specific
+####    value they provide, e.g. find all matches where PACKETS > `10`
 select_operator() {
     echo "Enter your search value for searching ${critArray[criteria]}: "
     read -p " " srchval
@@ -110,6 +103,9 @@ select_operator() {
     fi
 }
 
+#### FUNCTION OBJECTIVE
+#### 2. Enable the log tool script to run searches on all available server access logs based on one (1) field
+####    criteria input, e.g., find all matches where PROTOCOL=`TCP` in all available log files
 search_for_protocols() {
     while true; do
         echo "Enter the protocol to search [TCP, UDP, ICMP, GRE] "
@@ -139,7 +135,10 @@ search_for_protocols() {
         fi
     done
 }
-
+#### FUNCTION OBJECTIVE
+#### 3. When the PACKETS and/or BYTES fields are used as search criteria, totals for each of these should
+####    also be calculated and displayed as the final row of the search results printed to terminal/file
+####    here --> END { print "Total rows with matching bytes value/range are ",  NR }
 search_bytes() {
     awk 'BEGIN {FS=","; ttlbytes=0}
         NR>=1 {
@@ -154,7 +153,12 @@ search_bytes() {
     cat $csvfilename
 }
 
+#### FUNCTION OBJECTIVE
+#### 3. When the PACKETS and/or BYTES fields are used as search criteria, totals for each of these should
+####    also be calculated and displayed as the final row of the search results printed to terminal/file
+####    here --> END { print "Total rows with matching bytes value/range are ",  NR }
 search_packets() {
+ 
     awk 'BEGIN {FS=","; ttlpackets=0}
         NR>=1 {
                 if ( $8 '$2' '"$1"')
@@ -168,6 +172,10 @@ search_packets() {
     cat $csvfilename
 }
 
+#### FUNCTION OBJECTIVE
+#### 6. The user must be able to conduct as many search operations as they wish without the script
+####    terminating. Hence, the script must continue to run until the user specifically chooses to terminate it
+####    via a menu option.
 search_again() {
     read -n 1 -p "Do you wish to make another search (y/n)? " answer
     case ${answer:0:1} in
@@ -180,85 +188,90 @@ search_again() {
 esac
 }
 
-
-###############################################################
-############-----------MAIN CODE-------########################
-###############################################################
-
+#### FUNCTION OBJECTIVE
+#### The user input code is made as a function for the script to continue to run 
+#### until the user specifically chooses to terminate it via a menu option.
 
 main_menu() {
-### Ask the user for search criteria
-while true; do
-    echo "\n"
-    echo "1.PROTOCOL  2.SRC-IP  3.SRC-PORT  4.DEST-IP  5.DEST-PORT  6.PACKETS  7.BYTES"
-    echo "\n"
-    echo "Please enter the criteria to search:"
-    read -p " " criteria 
-        if [[ $criteria -ge 1 ]] && [[ $criteria -le 7 ]]; then
-            break;
-        else
-            echo "Ivalid Input. Please try again."
+    declare -a logs
+    patt="serv_acc_log.+csv$"
+    mennum=1
+    ### search for log files and get the csv files count and name for user to select input file.
+    for file in ./*; do
+        if [[ $file =~ $patt ]]; then 
+            logs+=($(basename $file))
         fi
-done
-### Show user their selection
-echo "You have selected the criteria $criteria. ${critArray[criteria]}\n"
-#### END OF CRITERIA SELECTION ########
-
-
-### Ask User for file input to run the searches on.
- while true; do
-    echo "The logs array contains $count files.\n"
-    for file in "${logs[@]}"; do
-        echo "$mennum $file"
-        ((mennum++))
     done
-    echo "\t"
-    echo "Enter the number for the corresponding file you wish to search, i.e. [ 1,2,3,4 or 5]"
-    echo "or enter number 6 to search all the log files listed above.\n "
-    read -p " " sel 
-        if [[ $sel -ge 1 ]] && [[ $sel -le 6 ]]; then
-            break;
+    count=${#logs[*]}
+    ### Ask the user for search criteria
+    while true; do
+        echo "\n1.PROTOCOL  2.SRC-IP  3.SRC-PORT  4.DEST-IP  5.DEST-PORT  6.PACKETS  7.BYTES"
+        echo "Please enter the criteria to search:"
+        read -p " " criteria 
+            if [[ $criteria -ge 1 ]] && [[ $criteria -le 7 ]]; then
+               break;
             else
-            echo "Ivalid Input. Please try again."
-        fi
-done
-### Show user their selection
-echo "you have selected $sel "
-#### END OF FILE SELECTION ########
+                echo "Ivalid Input. Please try again."
+            fi
+    done
+    ### Show user their selection
+    echo "You have selected the criteria $criteria. ${critArray[criteria]}\n"
+        #### END OF CRITERIA SELECTION ########
 
-# Call the function to select a single search log
-select_search_log $sel
 
-# Ask the user for csv filename to save the results.
-get_csv_filename
+    ### Ask User for file input to run the searches on.
+    while true; do
+        echo "The logs array contains $count files.\n"
+        for file in "${logs[@]}"; do
+            echo "$mennum $file"
+            ((mennum++))
+        done
+        echo "\nEnter the number for the corresponding file you wish to search, i.e. [ 1,2,3,4 or 5]"
+        echo "or enter number 6 to search all the log files listed above.\n "
+        read -p " " sel 
+            if [[ $sel -ge 1 ]] && [[ $sel -le 6 ]]; then
+                break;
+                else
+                echo "Ivalid Input. Please try again."
+            fi
+    done
+    ### Show user their selection
+    echo "you have selected $sel "
+    #### END OF FILE SELECTION ########
 
-# If user chose to search for TCP, UDP, ICMP, GRE etc.
-if [[ "$criteria" -eq 1 ]]; then
-    search_for_protocols
-    search_again
-fi
+    # Call the function to select a single search log
+    select_search_log $sel
 
-# If user chose to search for SRC-IP
-if [[ "$criteria" -eq 2 ]]; then
-    echo "nothing defined for SRC-IP"
-    search_again
-fi
+    # Ask the user for csv filename to save the results.
+    get_csv_filename
 
-# If user chose to search for SRC-PORT
-if [[ "$criteria" -eq 3 ]]; then
-     echo "nothing defined for SRC-PORT"
-     search_again
-fi
-# If user chose to search for DST-IP
-if [[ "$criteria" -eq 4 ]]; then
-     echo "nothing defined for SRC-IP"
-     search_again
-fi
-# If user chose to search for DST-PORT
-if [[ "$criteria" -eq 5 ]]; then
-     echo "nothing defined for DST-PORT"
-     search_again
-fi
+    # If user chose to search for TCP, UDP, ICMP, GRE etc.
+    if [[ "$criteria" -eq 1 ]]; then
+        search_for_protocols
+        search_again
+    fi
+
+    # If user chose to search for SRC-IP
+    if [[ "$criteria" -eq 2 ]]; then
+        echo "nothing defined for SRC-IP"
+        search_again
+    fi
+
+    # If user chose to search for SRC-PORT
+    if [[ "$criteria" -eq 3 ]]; then
+         echo "nothing defined for SRC-PORT"
+         search_again
+    fi
+    # If user chose to search for DST-IP
+    if [[ "$criteria" -eq 4 ]]; then
+         echo "nothing defined for SRC-IP"
+         search_again
+    fi
+    # If user chose to search for DST-PORT
+    if [[ "$criteria" -eq 5 ]]; then
+         echo "nothing defined for DST-PORT"
+         search_again
+    fi
 
 # If user chose to search for PACKETS
 if [[ "$criteria" -eq 6 ]]; then
@@ -274,6 +287,10 @@ if [[ "$criteria" -eq 7 ]]; then
     search_again
 fi
 }
+
+###############################################################
+############-----------MAIN CODE-------########################
+###############################################################
 main_menu
 
 exit 0
