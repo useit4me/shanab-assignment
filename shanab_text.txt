@@ -1,0 +1,25 @@
+Shanab script to say 
+
+The script lets you run repeated searches on csv  log files based on user inputs. For example, Protocol, SRC ip
+
+We have defined functions for every search criteria to make the code easy to read and easy to follow
+
+Firstly, the script asks you to enter search criteria, we capture it as a input number , then we list of log files available using an array
+Number  for each criteria is displayed correctly for the user , we call functions and we have made our main menu a function so that, after each time a search is done, we have defined a search again function, where we call the main menu again and again, till the users choses to terminate the scripts. 
+
+We check for input validations where the users select the input number we have a legible menu and input validations are done via if conditions and do while statements. 
+
+For text inputs we are converting cases and validations. 
+
+The tricky part for me was to run searches on all the files and what I did was to use a temporary file and appended the file using the “>> append” operator and then running awk on the temp file and finally writing the output to the csv file user inputs to in a readable table format.
+
+Majority of the searches are done using awk 
+For searching protocols like TCP UDP ICMP etc. we convert the case and use an awk to grep for protocols and filtering suspicious record to a dump file and then working on that file. And deleting the dump file after operations
+
+It was really great to understand how awk works and formatting to get the desired out put was fun and a great learning for me.
+
+Some clever methods I consider I used in here is the case conversion, the array is used for input protocols where I offset the first element 0 of the array to a dummy element and file name duplication detection, and looping the whole script for getting the user input which I had to convert my linear code which I initially wrote to a modular function based script.
+
+
+The method I used for writing this script was to follow the requirements questionnaires and I have commented the questionnaire text as objective and commented what I learned on how the code works especially awk. 
+
